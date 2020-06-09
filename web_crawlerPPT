@@ -1,0 +1,233 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from selenium import webdriver\n",
+    "from bs4 import BeautifulSoup\n",
+    "import requests\n",
+    "import re #正規表達式\n",
+    "import pandas as pd\n",
+    "from tqdm.auto import tqdm\n",
+    "pd.set_option('max_colwidth',300)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def get_article_info(topic, num_page):\n",
+    "    \n",
+    "    driver = webdriver.Chrome(r'C:\\chromedriver.exe')\n",
+    "    driver.get(topic)\n",
+    "    driver.find_element_by_class_name('btn-big').click()\n",
+    "    \n",
+    "    title = []\n",
+    "    push = []\n",
+    "    author = []\n",
+    "    date = []\n",
+    "    link = []\n",
+    "    for page in tqdm(range(num_page)):\n",
+    "        soup = BeautifulSoup(driver.page_source, 'html.parser')\n",
+    "\n",
+    "        for article_info in soup.select('div.r-ent'):\n",
+    "            if article_info.find_all('a') != []:\n",
+    "\n",
+    "                title_link = article_info.find_all('a')[0]\n",
+    "\n",
+    "                title.append(title_link.text.strip())\n",
+    "                url = title_link['href']\n",
+    "                link.append('https://www.ptt.cc' + url)\n",
+    "\n",
+    "                tmp_push = article_info.select('span', class_=\"hl f2\")\n",
+    "                push.append('NA' if tmp_push == [] else tmp_push[0].text)\n",
+    "\n",
+    "                author.append(article_info.select('.author')[0].text)\n",
+    "\n",
+    "                date.append(article_info.select('.date')[0].text)\n",
+    "\n",
+    "        driver.find_element_by_link_text('‹ 上頁').click() \n",
+    "    driver.find_element_by_link_text('最新').click()\n",
+    "    \n",
+    "    final = pd.DataFrame({'標題' : title,\n",
+    "                          '推文數' : push,\n",
+    "                          '作者' : author,\n",
+    "                          \"發文日期\" : date,\n",
+    "                          'link' : link})\n",
+    "    \n",
+    "    return final"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "4c4c9529ae134420bfed0317f9d49fad",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "HBox(children=(IntProgress(value=0, max=30), HTML(value='')))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    },
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "topic = 'https://www.ptt.cc/bbs/Beauty/index.html'\n",
+    "num_page = 30\n",
+    "\n",
+    "if __name__ == '__main__':\n",
+    "    df = get_article_info(topic, num_page)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>標題</th>\n",
+       "      <th>推文數</th>\n",
+       "      <th>作者</th>\n",
+       "      <th>發文日期</th>\n",
+       "      <th>link</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <td>0</td>\n",
+       "      <td>[正妹] 新警察</td>\n",
+       "      <td>4</td>\n",
+       "      <td>ReiKuromiya</td>\n",
+       "      <td>12/30</td>\n",
+       "      <td>https://www.ptt.cc/bbs/Beauty/M.1577639181.A.367.html</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>1</td>\n",
+       "      <td>[正妹] 筋肉女警</td>\n",
+       "      <td>7</td>\n",
+       "      <td>ReiKuromiya</td>\n",
+       "      <td>12/30</td>\n",
+       "      <td>https://www.ptt.cc/bbs/Beauty/M.1577640847.A.ED1.html</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>2</td>\n",
+       "      <td>[正妹] 越南 氣質</td>\n",
+       "      <td>4</td>\n",
+       "      <td>x572061349</td>\n",
+       "      <td>12/30</td>\n",
+       "      <td>https://www.ptt.cc/bbs/Beauty/M.1577648251.A.8C1.html</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>3</td>\n",
+       "      <td>[挑戰] 勇敢的女人</td>\n",
+       "      <td>NA</td>\n",
+       "      <td>lamorning</td>\n",
+       "      <td>12/30</td>\n",
+       "      <td>https://www.ptt.cc/bbs/Beauty/M.1577656313.A.3A9.html</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <td>4</td>\n",
+       "      <td>[正妹] 還不錯的同學</td>\n",
+       "      <td>1</td>\n",
+       "      <td>cashpoint</td>\n",
+       "      <td>12/30</td>\n",
+       "      <td>https://www.ptt.cc/bbs/Beauty/M.1577662362.A.063.html</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "            標題 推文數           作者   發文日期  \\\n",
+       "0     [正妹] 新警察   4  ReiKuromiya  12/30   \n",
+       "1    [正妹] 筋肉女警   7  ReiKuromiya  12/30   \n",
+       "2   [正妹] 越南 氣質   4   x572061349  12/30   \n",
+       "3   [挑戰] 勇敢的女人  NA    lamorning  12/30   \n",
+       "4  [正妹] 還不錯的同學   1    cashpoint  12/30   \n",
+       "\n",
+       "                                                    link  \n",
+       "0  https://www.ptt.cc/bbs/Beauty/M.1577639181.A.367.html  \n",
+       "1  https://www.ptt.cc/bbs/Beauty/M.1577640847.A.ED1.html  \n",
+       "2  https://www.ptt.cc/bbs/Beauty/M.1577648251.A.8C1.html  \n",
+       "3  https://www.ptt.cc/bbs/Beauty/M.1577656313.A.3A9.html  \n",
+       "4  https://www.ptt.cc/bbs/Beauty/M.1577662362.A.063.html  "
+      ]
+     },
+     "execution_count": 7,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.7.4"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}
